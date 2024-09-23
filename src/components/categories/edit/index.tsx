@@ -5,6 +5,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { RcFile, UploadChangeParam } from "antd/es/upload";
 import { ICategoryEdit, IUploadedFile } from "./types";
 import { API_URL, http_common } from "../../../env";
+import Loader from "../../common/Loader"; // Імпортуємо компонент Loader
 
 const CategoryEditPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -16,9 +17,11 @@ const CategoryEditPage = () => {
     const [previewTitle, setPreviewTitle] = useState('');
     const [category, setCategory] = useState<ICategoryEdit | null>(null);
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [loading, setLoading] = useState<boolean>(false); // Додаємо стан для лоадера
 
     useEffect(() => {
         const fetchCategory = async () => {
+            setLoading(true); // Включаємо лоадер
             try {
                 const response = await http_common.get<ICategoryEdit>(`${API_URL}/api/categories/${id}`);
                 setCategory(response.data);
@@ -29,23 +32,26 @@ const CategoryEditPage = () => {
                         uid: '-1',
                         name: response.data.image,
                         status: 'done',
-                        url: `${API_URL}/images/${response.data.image}`
+                        url: `${API_URL}/images/300_${response.data.image}` // Додаємо префікс розміру
                     }]);
                 }
             } catch (err) {
                 console.error("Error fetching category:", err);
+            } finally {
+                setLoading(false); // Вимикаємо лоадер
             }
         };
         fetchCategory();
     }, [id, form]);
 
     const onSubmit = async (values: ICategoryEdit) => {
+        setLoading(true); // Включаємо лоадер
         const formData = new FormData();
         formData.append("name", values.name);
         formData.append("description", values.description || "");
 
-        if (values.image) {
-            formData.append("newImage", values.image as RcFile);
+        if (fileList.length > 0 && fileList[0].originFileObj) {
+            formData.append("newImage", fileList[0].originFileObj as RcFile);
         }
 
         try {
@@ -55,6 +61,8 @@ const CategoryEditPage = () => {
             navigate('/');
         } catch (error) {
             console.error("Error updating category:", error);
+        } finally {
+            setLoading(false); // Вимикаємо лоадер
         }
     };
 
@@ -74,6 +82,8 @@ const CategoryEditPage = () => {
 
     return (
         <>
+            {loading && <Loader />} {/* Відображаємо лоадер під час завантаження */}
+
             <h1 className={"text-center text-3xl font-bold tracking-tight text-gray-900 mb-2"}>Редагувати категорію</h1>
 
             <Form
