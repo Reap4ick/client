@@ -1,8 +1,11 @@
 import MainLayout from "./components/containers/default";
-import {Route, Routes} from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import HomePage from "./components/home";
 import CategoryCreatePage from "./components/categories/create";
 import EditCategoryPage from "./components/categories/edit";
+import ProductListPage from "./components/products/list";
+import ProductCreatePage from "./components/products/create";
+import EditProductPage from "./components/products/edit"; // Імпорт сторінки редагування продукту
 
 export default function App() {
     return (
@@ -10,17 +13,22 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<HomePage />} />
-                    <Route path="create" element={<CategoryCreatePage />} />|
+                    <Route path="create" element={<CategoryCreatePage />} />
                     <Route path="/edit/:id" element={<EditCategoryPage />} />
+                    
+                    {/* Роутинг для продуктів */}
+                    <Route path={"products"}>
+                        <Route index element={<ProductListPage />} />
+                        <Route path="create" element={<ProductCreatePage />} />
+                        <Route path="edit/:id" element={<EditProductPage />} /> {/* Додано роут для редагування продукту */}
+                    </Route>
 
-                    {/* Using path="*"" means "match anything", so this route
-                acts like a catch-all for URLs that we don't have explicit
-                routes for. */}
+                    {/* Catch-all для невизначених URL */}
                     {/*<Route path="*" element={<NoMatch />} />*/}
                 </Route>
             </Routes>
         </>
-    )
+    );
 }
 
 

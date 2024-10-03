@@ -1,114 +1,84 @@
-import { useEffect, useState } from "react";
+import { ICategoryEdit } from "./types.ts";
 import { Button, Form, Input, Modal, Row, Upload, UploadFile } from "antd";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { PlusOutlined } from '@ant-design/icons';
 import { RcFile, UploadChangeParam } from "antd/es/upload";
-import { ICategoryEdit, IUploadedFile } from "./types";
 import { API_URL, http_common } from "../../../env";
-import Loader from "../../common/Loader"; // Імпортуємо компонент Loader
+import { IUploadedFile } from "../create/types.ts";
 
 const CategoryEditPage = () => {
-    const { id } = useParams<{ id: string }>();
+    const { id } = useParams();
     const navigate = useNavigate();
     const [form] = Form.useForm<ICategoryEdit>();
 
     const [previewOpen, setPreviewOpen] = useState<boolean>(false);
     const [previewImage, setPreviewImage] = useState('');
     const [previewTitle, setPreviewTitle] = useState('');
-    const [category, setCategory] = useState<ICategoryEdit | null>(null);
-    const [fileList, setFileList] = useState<UploadFile[]>([]);
-    const [loading, setLoading] = useState<boolean>(false); // Додаємо стан для лоадера
 
-    useEffect(() => {
-        const fetchCategory = async () => {
-            setLoading(true); // Включаємо лоадер
-            try {
-                const response = await http_common.get<ICategoryEdit>(`${API_URL}/api/categories/${id}`);
-                setCategory(response.data);
-                form.setFieldsValue(response.data);
-
-                if (response.data.image) {
-                    setFileList([{
-                        uid: '-1',
-                        name: response.data.image,
-                        status: 'done',
-                        url: `${API_URL}/images/300_${response.data.image}` // Додаємо префікс розміру
-                    }]);
-                }
-            } catch (err) {
-                console.error("Error fetching category:", err);
-            } finally {
-                setLoading(false); // Вимикаємо лоадер
-            }
-        };
-        fetchCategory();
-    }, [id, form]);
+    const [file, setFile] = useState<UploadFile | null>();
 
     const onSubmit = async (values: ICategoryEdit) => {
-        setLoading(true); // Включаємо лоадер
-        const formData = new FormData();
-        formData.append("name", values.name);
-        formData.append("description", values.description || "");
+        console.log("Send Data", values);
+        http_common.put<ICategoryEdit>("/api/categories", { ...values, id: id },
+            { headers: { "Content-Type": "multipart/form-data" } })
+            .then(resp => {
+                console.log("Update category", resp.data);
+                navigate('/');
+            })
+    }
 
-        if (fileList.length > 0 && fileList[0].originFileObj) {
-            formData.append("newImage", fileList[0].originFileObj as RcFile);
-        }
-
-        try {
-            await http_common.put(`${API_URL}/api/categories/${id}`, formData, {
-                headers: { "Content-Type": "multipart/form-data" }
+    useEffect(() => {
+        http_common.get<ICategoryEdit>(`/api/categories/${id}`)
+            .then(resp => {
+                const { data } = resp;
+                form.setFieldsValue({
+                    ...data,
+                });
+                if (data.image != null) {
+                    setFile({
+                        uid: '-1',
+                        name: data.name,
+                        status: "done",
+                        url: `${API_URL}/images/300_${data.image}`
+                    });
+                }
+                //console.log("get by Id", resp.data);
             });
-            navigate('/');
-        } catch (error) {
-            console.error("Error updating category:", error);
-        } finally {
-            setLoading(false); // Вимикаємо лоадер
-        }
-    };
-
-    const handleImageChange = (info: UploadChangeParam<UploadFile<any>>) => {
-        const file = info.fileList[0] as IUploadedFile;
-
-        form.setFieldsValue({ image: file.originFileObj });
-        setFileList(info.fileList);
-
-        if (!file.url && !file.preview) {
-            file.preview = URL.createObjectURL(file.originFileObj as RcFile);
-        }
-        setPreviewImage(file.url || (file.preview as string));
-        setPreviewOpen(true);
-        setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
-    };
+    }, []);
 
     return (
         <>
-            {loading && <Loader />} {/* Відображаємо лоадер під час завантаження */}
-
             <h1 className={"text-center text-3xl font-bold tracking-tight text-gray-900 mb-2"}>Редагувати категорію</h1>
 
             <Form
                 form={form}
                 onFinish={onSubmit}
-                layout="vertical"
-                initialValues={category}
-            >
+                layout="vertical">
 
                 <Form.Item
                     label={"Назва"}
                     name={"name"}
+                    htmlFor={"name"}
                     rules={[
                         { required: true, message: "Це поле є обов'язковим!" },
-                        { min: 3, message: "Довжина поля має бути не менше 3 символів" }
+                        { min: 3, message: "Довжина поля 3 символи" }
                     ]}
                 >
                     <Input autoComplete="name"
-                        className={"block w-full px-5 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"} />
+                        className={"block w-full px-5  text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"} />
                 </Form.Item>
 
+
+                {/* Поле для введення опису */}
                 <Form.Item
                     label={"Опис"}
                     name={"description"}
-                    rules={[{ max: 4000, message: "Опис не може бути більше ніж 4000 символів" }]}
+                    htmlFor={"description"}
+                    rules={[
+                        { required: false },
+                        { max: 4000, message: "Опис не може бути більше ніж 4000 символів" }
+                    ]}
                 >
                     <Input.TextArea rows={4}
                         className={"block w-full px-5 text-gray-700 placeholder-gray-400 bg-white border border-gray-200 rounded-lg dark:placeholder-gray-600 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700 focus:border-blue-400 dark:focus:border-blue-400 focus:ring-blue-400 focus:outline-none focus:ring focus:ring-opacity-40"} />
@@ -118,14 +88,32 @@ const CategoryEditPage = () => {
                     <Form.Item
                         name="image"
                         label="Фото"
+                        valuePropName="image"
+                        getValueFromEvent={(e: UploadChangeParam) => {
+                            const image = e?.fileList[0] as IUploadedFile;
+                            return image?.originFileObj;
+                        }}
+                    // rules={[{required: true, message: 'Оберіть фото категорії!'}]}
                     >
                         <Upload
+                            // showUploadList={{showPreviewIcon: false}}
                             beforeUpload={() => false}
                             accept="image/*"
+                            onPreview={(file: UploadFile) => {
+                                if (!file.url && !file.preview) {
+                                    file.preview = URL.createObjectURL(file.originFileObj as RcFile);
+                                }
+
+                                setPreviewImage(file.url || (file.preview as string));
+                                setPreviewOpen(true);
+                                setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
+                            }}
+                            fileList={file ? [file] : []}
+                            onChange={(data) => {
+                                setFile(data.fileList[0]);
+                            }}
                             listType="picture-card"
                             maxCount={1}
-                            fileList={fileList}
-                            onChange={handleImageChange}
                         >
                             <div>
                                 <PlusOutlined />
@@ -139,7 +127,7 @@ const CategoryEditPage = () => {
                     <Button style={{ margin: 10 }}
                         className={"text-white capitalize transition-colors duration-300 transform bg-blue-500"}
                         type="primary" htmlType="submit">
-                        Зберегти
+                        Додати
                     </Button>
                     <Link to={"/"}>
                         <Button style={{ margin: 10 }} htmlType="button">
@@ -149,6 +137,7 @@ const CategoryEditPage = () => {
                 </Row>
 
             </Form>
+
             <Modal open={previewOpen} title={previewTitle} footer={null} onCancel={() => setPreviewOpen(false)}>
                 <img alt="example" style={{ width: '100%' }} src={previewImage} />
             </Modal>
