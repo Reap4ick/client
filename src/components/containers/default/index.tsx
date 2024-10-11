@@ -1,13 +1,10 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import {Link, Outlet} from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../../../redux/slices/authSlice'; // Імпортуйте ваш logout екшн
+import { RootState } from '../../../redux/store'; // Імпортуйте RootState для доступу до стану
 
-const user = {
-    name: 'Tom Cook',
-    email: 'tom@example.com',
-    imageUrl:
-        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-}
 const navigation = [
     { name: 'Dashboard', href: '#', current: true },
     { name: 'Products', href: '/products', current: false },
@@ -15,18 +12,21 @@ const navigation = [
     { name: 'Calendar', href: '#', current: false },
     { name: 'Reports', href: '#', current: false },
 ]
-const userNavigation = [
-    { name: 'Your Profile', href: '#' },
-    { name: 'Settings', href: '#' },
-    { name: 'Sign out', href: '#' },
-]
 
-function classNames(...classes) {
+function classNames(...classes: string[]) {
     return classes.filter(Boolean).join(' ')
 }
 
-
 const MainLayout = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+
+    const handleLogout = () => {
+        dispatch(logout());
+        navigate('/login'); // Після виходу перенаправляємо на сторінку логіну
+    };
+
     return (
         <>
             <div className="min-h-full">
@@ -61,46 +61,72 @@ const MainLayout = () => {
                             </div>
                             <div className="hidden md:block">
                                 <div className="ml-4 flex items-center md:ml-6">
-                                    <button
-                                        type="button"
-                                        className="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                                    >
-                                        <span className="absolute -inset-1.5" />
-                                        <span className="sr-only">View notifications</span>
-                                        <BellIcon aria-hidden="true" className="h-6 w-6" />
-                                    </button>
+                                    {!isAuthenticated ? (
+                                        <>
+                                            <Link
+                                                to="/login"
+                                                className="text-white px-3 py-2 rounded-md text-sm font-medium"
+                                            >
+                                                Login
+                                            </Link>
+                                            <Link
+                                                to="/register"
+                                                className="text-white px-3 py-2 rounded-md text-sm font-medium"
+                                            >
+                                                Register
+                                            </Link>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                type="button"
+                                                className="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                                            >
+                                                <span className="sr-only">View notifications</span>
+                                                <BellIcon aria-hidden="true" className="h-6 w-6" />
+                                            </button>
 
-                                    {/* Profile dropdown */}
-                                    <Menu as="div" className="relative ml-3">
-                                        <div>
-                                            <MenuButton className="relative flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                                                <span className="absolute -inset-1.5" />
-                                                <span className="sr-only">Open user menu</span>
-                                                <img alt="" src={user.imageUrl} className="h-8 w-8 rounded-full" />
-                                            </MenuButton>
-                                        </div>
-                                        <MenuItems
-                                            transition
-                                            className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
-                                        >
-                                            {userNavigation.map((item) => (
-                                                <MenuItem key={item.name}>
-                                                    <a
-                                                        href={item.href}
-                                                        className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100"
-                                                    >
-                                                        {item.name}
-                                                    </a>
-                                                </MenuItem>
-                                            ))}
-                                        </MenuItems>
-                                    </Menu>
+                                            {/* Profile dropdown */}
+                                            <Menu as="div" className="relative ml-3">
+                                                <div>
+                                                    <MenuButton className="relative flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                                                        <span className="sr-only">Open user menu</span>
+                                                        <span className="text-white">{user?.name}</span>
+                                                    </MenuButton>
+                                                </div>
+                                                <MenuItems
+                                                    transition
+                                                    className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition focus:outline-none"
+                                                >
+                                                    <MenuItem>
+                                                        {({ active }) => (
+                                                            <Link
+                                                                to="/profile"
+                                                                className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}
+                                                            >
+                                                                Profile
+                                                            </Link>
+                                                        )}
+                                                    </MenuItem>
+                                                    <MenuItem>
+                                                        {({ active }) => (
+                                                            <button
+                                                                onClick={handleLogout}
+                                                                className={classNames(active ? 'bg-gray-100' : '', 'block px-4 py-2 text-sm text-gray-700')}
+                                                            >
+                                                                Log out
+                                                            </button>
+                                                        )}
+                                                    </MenuItem>
+                                                </MenuItems>
+                                            </Menu>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                             <div className="-mr-2 flex md:hidden">
                                 {/* Mobile menu button */}
                                 <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
-                                    <span className="absolute -inset-0.5" />
                                     <span className="sr-only">Open main menu</span>
                                     <Bars3Icon aria-hidden="true" className="block h-6 w-6 group-data-[open]:hidden" />
                                     <XMarkIcon aria-hidden="true" className="hidden h-6 w-6 group-data-[open]:block" />
@@ -126,45 +152,45 @@ const MainLayout = () => {
                                 </DisclosureButton>
                             ))}
                         </div>
-                        <div className="border-t border-gray-700 pb-3 pt-4">
-                            <div className="flex items-center px-5">
-                                <div className="flex-shrink-0">
-                                    <img alt="" src={user.imageUrl} className="h-10 w-10 rounded-full" />
+                        {isAuthenticated && (
+                            <div className="border-t border-gray-700 pb-3 pt-4">
+                                <div className="flex items-center px-5">
+                                    <div className="ml-3">
+                                        <div className="text-base font-medium leading-none text-white">{user?.name}</div>
+                                        <div className="text-sm font-medium leading-none text-gray-400">{user?.email}</div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="relative ml-auto flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+                                    >
+                                        <span className="sr-only">View notifications</span>
+                                        <BellIcon aria-hidden="true" className="h-6 w-6" />
+                                    </button>
                                 </div>
-                                <div className="ml-3">
-                                    <div className="text-base font-medium leading-none text-white">{user.name}</div>
-                                    <div className="text-sm font-medium leading-none text-gray-400">{user.email}</div>
-                                </div>
-                                <button
-                                    type="button"
-                                    className="relative ml-auto flex-shrink-0 rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
-                                >
-                                    <span className="absolute -inset-1.5" />
-                                    <span className="sr-only">View notifications</span>
-                                    <BellIcon aria-hidden="true" className="h-6 w-6" />
-                                </button>
-                            </div>
-                            <div className="mt-3 space-y-1 px-2">
-                                {userNavigation.map((item) => (
+                                <div className="mt-3 space-y-1 px-2">
                                     <DisclosureButton
-                                        key={item.name}
                                         as="a"
-                                        href={item.href}
+                                        href="/profile"
                                         className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
                                     >
-                                        {item.name}
+                                        Profile
                                     </DisclosureButton>
-                                ))}
+                                    <DisclosureButton
+                                        as="button"
+                                        onClick={handleLogout}
+                                        className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
+                                    >
+                                        Log out
+                                    </DisclosureButton>
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </DisclosurePanel>
                 </Disclosure>
 
-               <main>
+                <main>
                     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-
-                        <Outlet/>
-                        {/* Your content */}
+                        <Outlet />
                     </div>
                 </main>
             </div>

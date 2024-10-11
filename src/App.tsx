@@ -1,58 +1,39 @@
-import MainLayout from "./components/containers/default";
-import { Route, Routes } from "react-router-dom";
-import HomePage from "./components/home";
-import CategoryCreatePage from "./components/categories/create";
-import EditCategoryPage from "./components/categories/edit";
-import ProductListPage from "./components/products/list";
-import ProductCreatePage from "./components/products/create";
-import EditProductPage from "./components/products/edit"; // Імпорт сторінки редагування продукту
+import React from 'react';
+import { Provider } from 'react-redux';
+import store from './redux/store'; // Імпорт твого store
+import MainLayout from './components/containers/default';
+import { Route, Routes } from 'react-router-dom';
+import HomePage from './components/home';
+import CategoryCreatePage from './components/categories/create';
+import EditCategoryPage from './components/categories/edit';
+import ProductListPage from './components/products/list';
+import ProductCreatePage from './components/products/create';
+import EditProductPage from './components/products/edit';
+import Login from './components/auth/login';
+import Register from './components/auth/register';
+import Profile from './components/auth/profile';
 
 export default function App() {
     return (
-        <>
+        <Provider store={store}> {/* Обгортай тут */}
             <Routes>
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<HomePage />} />
                     <Route path="create" element={<CategoryCreatePage />} />
                     <Route path="/edit/:id" element={<EditCategoryPage />} />
-                    
+
                     {/* Роутинг для продуктів */}
                     <Route path={"products"}>
                         <Route index element={<ProductListPage />} />
                         <Route path="create" element={<ProductCreatePage />} />
-                        <Route path="edit/:id" element={<EditProductPage />} /> {/* Додано роут для редагування продукту */}
+                        <Route path="edit/:id" element={<EditProductPage />} />
                     </Route>
 
-                    {/* Catch-all для невизначених URL */}
-                    {/*<Route path="*" element={<NoMatch />} />*/}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/profile" element={<Profile />} /> 
                 </Route>
             </Routes>
-        </>
+        </Provider>
     );
 }
-
-
-// import React from "react";
-// import CreateCategory from "./components/CreateCategory";
-// import CategoryList from "./components/CategoryList";
-
-
-// const App: React.FC = () => {
-//   return (
-//     <div className="min-h-screen bg-gray-100 p-6">
-//       <h1 className="text-3xl font-bold mb-6 text-center">Category Management</h1>
-//       <CreateCategory />
-//       <CategoryList />
-//     </div>
-//   );
-// };
-
-// export default App;
-
-
-
-
-
-
-
-

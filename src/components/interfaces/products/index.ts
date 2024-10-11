@@ -23,3 +23,4 @@ export interface IProductEdit {
     Newimages?: File[] | null;
 }
 
+  
