@@ -6,3 +6,7 @@ export interface IProductItem {
     image: string;
 }
 
+export interface ICategoryName {
+    id: number;
+    name: string;
+}

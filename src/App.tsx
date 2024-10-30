@@ -9,9 +9,12 @@ import EditCategoryPage from './components/categories/edit';
 import ProductListPage from './components/products/list';
 import ProductCreatePage from './components/products/create';
 import EditProductPage from './components/products/edit';
+import DetailsProductPage from './components/products/details';
 import Login from './components/auth/login';
 import Register from './components/auth/register';
 import Profile from './components/auth/profile';
+
+
 
 export default function App() {
     return (
@@ -27,6 +30,7 @@ export default function App() {
                         <Route index element={<ProductListPage />} />
                         <Route path="create" element={<ProductCreatePage />} />
                         <Route path="edit/:id" element={<EditProductPage />} />
+                        <Route path="details/:id" element={<DetailsProductPage />} />
                     </Route>
 
                     <Route path="/login" element={<Login />} />

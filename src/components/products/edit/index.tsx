@@ -17,7 +17,7 @@ const ProductEditPage = () => {
     const { id } = useParams<{ id: string }>();
     const [form] = Form.useForm<IProductEdit>();
     const [categories, setCategories] = useState<ICategoryName[]>([]);
-    const [previewOpen, setPreviewOpen] = useState<boolean>(false);
+    const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const [previewTitle, setPreviewTitle] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
@@ -25,68 +25,69 @@ const ProductEditPage = () => {
     useEffect(() => {
         // Отримання категорій
         http_common.get<ICategoryItem[]>("/api/Categories")
-            .then(resp => {
-                setCategories(resp.data);
-            });
+            .then(resp => setCategories(resp.data))
+            .catch(error => console.error("Error fetching categories:", error));
 
         // Отримання продукту для редагування
         http_common.get<IProductEdit>(`/api/Products/${id}`)
             .then(resp => {
                 form.setFieldsValue(resp.data);
 
-                // Форматування існуючих зображень для відображення 
+                // Форматування існуючих зображень для відображення
                 if (resp.data.images) {
-                    const existingImages = resp.data.images.map((image: string) => {
+                    const existingImages = resp.data.images.map(image => {
                         const imageName = image.substring(image.lastIndexOf('/') + 1);
                         const imageUrl = `${http_common.defaults.baseURL}/images/300_${imageName}`;
                         return {
                             uid: imageUrl,
                             name: imageName,
-                            status: 'done' as const,
-                            url: imageUrl
+                            status: 'done',
+                            url: imageUrl,
                         } as UploadFile;
                     });
                     setFileList(existingImages);
                 }
-            });
+            })
+            .catch(error => console.error("Error fetching product data:", error));
     }, [id, form]);
 
     const onSubmit = async (values: IProductEdit) => {
         try {
-            console.log("Send Data:", values);
-            http_common.put(`/api/Products/${id}`, values, {
-                headers: { "Content-Type": "multipart/form-data" }                        
-            }).then(resp => {
-                console.log("Product updated:", resp.data);
-                navigate(`/products`);
+            const formData = new FormData();
+            Object.entries(values).forEach(([key, value]) => {
+                if (key === "images" && Array.isArray(value)) {
+                    value.forEach(file => formData.append("images", file));
+                } else {
+                    formData.append(key, value as any);
+                }
             });
+
+            await http_common.put(`/api/Products/${id}`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            navigate(`/products`);
         } catch (error) {
             console.error("Error updating product:", error);
         }
     };
 
     const handleChange = (info: UploadChangeParam) => {
-        if (info.fileList) {
-            setFileList(info.fileList);
-        }
+        setFileList(info.fileList);
     };
 
     return (
         <>
             <p className="text-center text-3xl font-bold mb-7">Edit Product</p>
             <Form form={form} onFinish={onSubmit} labelCol={{ span: 6 }} wrapperCol={{ span: 14 }}>
-                <Form.Item name="name" label="Name" hasFeedback
-                    rules={[{ required: true, message: 'Please provide a valid product name.' }]}>
+                <Form.Item name="name" label="Name" hasFeedback rules={[{ required: true, message: 'Please provide a valid product name.' }]}>
                     <Input placeholder='Type product name' />
                 </Form.Item>
 
-                <Form.Item name="price" label="Price" hasFeedback
-                    rules={[{ required: true, message: 'Please enter product price.' }]}>
+                <Form.Item name="price" label="Price" hasFeedback rules={[{ required: true, message: 'Please enter product price.' }]}>
                     <InputNumber addonAfter="$" placeholder='0.00' />
                 </Form.Item>
 
-                <Form.Item name="categoryId" label="Category" hasFeedback
-                    rules={[{ required: true, message: 'Please choose the category.' }]}>
+                <Form.Item name="categoryId" label="Category" hasFeedback rules={[{ required: true, message: 'Please choose the category.' }]}>
                     <Select placeholder="Select a category">
                         {categories.map(c => (
                             <Select.Option key={c.id} value={c.id}> {c.name}</Select.Option>
@@ -94,12 +95,12 @@ const ProductEditPage = () => {
                     </Select>
                 </Form.Item>
 
-                <Form.Item name="images" label="Photo" valuePropName="image"
+                <Form.Item
+                    name="images"
+                    label="Photo"
                     rules={[{ required: true, message: "Please choose a photo for the product." }]}
-                    getValueFromEvent={(e: UploadChangeParam) => {
-                        return e?.fileList.map(file => file.originFileObj);
-                    }}>
-
+                    getValueFromEvent={(e: UploadChangeParam) => e.fileList.map(file => file.originFileObj)}
+                >
                     <Upload
                         fileList={fileList}
                         onChange={handleChange}
@@ -107,17 +108,12 @@ const ProductEditPage = () => {
                         accept="image/*"
                         maxCount={10}
                         listType="picture-card"
-                        multiple
-                        onPreview={(file: UploadFile) => {
-                            if (!file.url && !file.preview) {
-                                file.preview = URL.createObjectURL(file.originFileObj as RcFile);
-                            }
-
-                            setPreviewImage(file.url || (file.preview as string));
+                        onPreview={(file) => {
+                            setPreviewImage(file.url || URL.createObjectURL(file.originFileObj as RcFile));
                             setPreviewOpen(true);
-                            setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
-                        }}>
-
+                            setPreviewTitle(file.name || '');
+                        }}
+                    >
                         <div>
                             <PlusOutlined />
                             <div style={{ marginTop: 8 }}>Upload</div>

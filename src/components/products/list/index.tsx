@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button, Carousel } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 import { API_URL, http_common } from "../../../env";
-import {DeleteDialog} from "../../common/DeleteDialog.tsx";
+import { DeleteDialog } from "../../common/DeleteDialog.tsx";
 
 const ProductListPage = () => {
     const [list, setList] = useState<IProductItem[]>([]);
@@ -17,10 +17,9 @@ const ProductListPage = () => {
     }, []);
 
     const handleDelete = async (id: number) => {
-        // Логіка видалення продукту
         try {
             await http_common.delete(`/api/Products/${id}`);
-            setList(list.filter(item => item.id !== id)); // Оновлюємо список
+            setList(list.filter(item => item.id !== id));
         } catch (error) {
             console.error("Failed to delete product:", error);
         }
@@ -35,7 +34,7 @@ const ProductListPage = () => {
 
             <div className='grid md:grid-cols-3 lg:grid-cols-4 gap-10'>
                 {list.map(item =>
-                    <div key={item.id} className='border rounded-lg overflow-hidden shadow-lg'>
+                    <div key={item.id} className='border rounded-lg overflow-hidden shadow-lg relative'>
                         <Carousel arrows infinite={false}>
                             {item.images.map((image, i) => (
                                 <div key={i}>
@@ -46,6 +45,13 @@ const ProductListPage = () => {
                         <div className='p-4'>
                             <h3 className='text-xl font-semibold mb-2'>{item.name}</h3>
                             <p className='text-teal-800 font-bold text-xl'>{item.price}<span className='text-sm'>$</span></p>
+
+                            {/* Кнопка "More" по центру */}
+                            <div className="flex justify-center mt-4">
+                                <Link to={`/products/details/${item.id}`}>
+                                    <Button type="default" className="text-black hover:text-purple-700">More</Button>
+                                </Link>
+                            </div>
 
                             <div className='flex justify-between items-center p-2 mt-6'>
                                 <DeleteDialog title={"Ви впевнені?"}
