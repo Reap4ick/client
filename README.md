@@ -1,50 +1,77 @@
-# React + TypeScript + Vite
+# reapchickclient-asp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Create docker hub repository - publish
+```
+docker build -t reapchickclient-asp-api . 
+docker run -it --rm -p 5184:80 --name reapchickclient-asp_container reapchickclient-asp-api
+docker run -d --restart=always --name reapchickclient-asp_container -p 5184:80 reapchickclient-asp-api
+docker run -d --restart=always -v d:/volumes/reapchickclient-asp/uploading:/app/uploading --name reapchickclient-asp_container -p 5184:80 reapchickclient-asp-api
+docker run -d --restart=always -v /volumes/reapchickclient-asp/uploading:/app/uploading --name reapchickclient-asp_container -p 5184:80 reapchickclient-asp-api
+docker ps -a
+docker stop reapchickclient-asp_container
+docker rm reapchickclient-asp_container
 
-Currently, two official plugins are available:
+docker images --all
+docker rmi reapchickclient-asp-api
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+docker login
+docker tag reapchickclient-asp-api:latest reapchik/reapchickclient-asp-api:latest
+docker push reapchik/reapchickclient-asp-api:latest
 
-## Expanding the ESLint configuration
+docker pull reapchik/reapchickclient-asp-api:latest
+docker ps -a
+docker run -d --restart=always --name reapchickclient-asp_container -p 5184:80 reapchik/reapchickclient-asp-api
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+docker run -d --restart=always -v /volumes/reapchickclient-asp/uploading:/app/uploading --name reapchickclient-asp_container -p 5184:80 reapchik/reapchickclient-asp-api
 
-- Configure the top-level `parserOptions` property like this:
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+docker pull reapchik/reapchickclient-asp-api:latest
+docker images --all
+docker ps -a
+docker stop reapchickclient-asp_container
+docker rm reapchickclient-asp_container
+docker run -d --restart=always --name reapchickclient-asp_container -p 5184:80 reapchik/reapchickclient-asp-api
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+```nginx options /etc/nginx/sites-available/default
+server {
+    server_name   api-reapchickclient-asp.itstep.click *.api-reapchickclient-asp.itstep.click;
+    location / {
+       proxy_pass         http://localhost:5184;
+       proxy_http_version 1.1;
+       proxy_set_header   Upgrade $http_upgrade;
+       proxy_set_header   Connection keep-alive;
+       proxy_set_header   Host $host;
+       proxy_cache_bypass $http_upgrade;
+       proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+server {
+		server_name   qubix.itstep.click *.qubix.itstep.click;
+		root /var/dist;
+		index index.html;
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+		location / {
+			try_files $uri /index.html;
+			#try_files $uri $uri/ =404;
+		}
+}
+
+server {
+		server_name   admin-qubix.itstep.click *.admin-qubix.itstep.click;
+		root /var/admin-qubix.itstep.click;
+		index index.html;
+
+		location / {
+			try_files $uri /index.html;
+			#try_files $uri $uri/ =404;
+		}
+}
+
+sudo systemctl restart nginx
+certbot
 ```
+
+/var/api-qubix.itstep.click/
