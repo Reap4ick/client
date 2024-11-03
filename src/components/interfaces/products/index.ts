@@ -14,10 +14,10 @@ export interface IProductCreate {
     images: File[]|null,
 }
 
-export interface IProductEdit{
-    name: string,
-    price: number,
-    categoryId: number,
-    prevImages: File[],
-    newImages: File[],
+export interface IProductEdit {
+    name: string;
+    price: number;
+    categoryId: number;
+    images?: File[];
+    deletedPhotoNames?: string[];  // Додаємо поле для імен видалених фото
 }

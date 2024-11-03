@@ -21,25 +21,23 @@ const ProductEditPage = () => {
     const [previewImage, setPreviewImage] = useState('');
     const [previewTitle, setPreviewTitle] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
+    const [deletedPhotoNames, setDeletedPhotoNames] = useState<string[]>([]);
 
     useEffect(() => {
-        // Отримання категорій
         http_common.get<ICategoryItem[]>("/api/Categories")
             .then(resp => setCategories(resp.data))
             .catch(error => console.error("Error fetching categories:", error));
 
-        // Отримання продукту для редагування
         http_common.get<IProductEdit>(`/api/Products/${id}`)
             .then(resp => {
                 form.setFieldsValue(resp.data);
 
-                // Форматування існуючих зображень для відображення
                 if (resp.data.images) {
-                    const existingImages = resp.data.images.map(image => {
+                    const existingImages = resp.data.images.map((image, index) => {
                         const imageName = image.substring(image.lastIndexOf('/') + 1);
                         const imageUrl = `${http_common.defaults.baseURL}/images/300_${imageName}`;
                         return {
-                            uid: imageUrl,
+                            uid: String(index),  // Використовуємо індекс для унікальності
                             name: imageName,
                             status: 'done',
                             url: imageUrl,
@@ -54,25 +52,57 @@ const ProductEditPage = () => {
     const onSubmit = async (values: IProductEdit) => {
         try {
             const formData = new FormData();
-            Object.entries(values).forEach(([key, value]) => {
-                if (key === "images" && Array.isArray(value)) {
-                    value.forEach(file => formData.append("images", file));
-                } else {
-                    formData.append(key, value as any);
-                }
+    
+            formData.append("Id", String(id));
+            formData.append("CategoryId", String(values.categoryId));
+            formData.append("Name", values.name || "");
+            formData.append("Price", String(values.price || ""));
+    
+            formData.append("CategoryList", JSON.stringify([]));
+    
+            const existingImages = fileList.map(file => 
+                typeof file.url === "string" 
+                    ? file.url.substring(file.url.lastIndexOf('/') + 1) 
+                    : file.name
+            );
+            formData.append("Images", JSON.stringify(existingImages));
+    
+            const newImages = fileList
+                .filter(file => file.originFileObj)
+                .map(file => file.originFileObj as RcFile);
+    
+            newImages.forEach(file => {
+                if (file) formData.append("NewImages", file);
             });
-
+    
+            deletedPhotoNames.forEach(photoName => formData.append("DeletedPhotoNames", photoName));
+    
             await http_common.put(`/api/Products/${id}`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
-            navigate(`/products`);
+            navigate('/products');
         } catch (error) {
             console.error("Error updating product:", error);
         }
     };
-
+    
+    
     const handleChange = (info: UploadChangeParam) => {
         setFileList(info.fileList);
+        console.log("Current file list:", info.fileList); // Логування поточного списку файлів
+    };
+    
+    
+
+    // const handleChange = (info: UploadChangeParam) => {
+    //     setFileList(info.fileList);
+    // };
+
+    const handleRemove = (file: UploadFile) => {
+        if (file.name && !file.originFileObj) {
+            setDeletedPhotoNames(prev => [...prev, file.name]);
+        }
+        return true;
     };
 
     return (
@@ -99,11 +129,11 @@ const ProductEditPage = () => {
                     name="images"
                     label="Photo"
                     rules={[{ required: true, message: "Please choose a photo for the product." }]}
-                    getValueFromEvent={(e: UploadChangeParam) => e.fileList.map(file => file.originFileObj)}
                 >
                     <Upload
                         fileList={fileList}
                         onChange={handleChange}
+                        onRemove={handleRemove}
                         beforeUpload={() => false}
                         accept="image/*"
                         maxCount={10}
