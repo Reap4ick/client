@@ -3,9 +3,10 @@ import { Form, Input, Button, Modal, Upload, UploadFile, Space, InputNumber, Sel
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { RcFile, UploadChangeParam } from "antd/es/upload";
 import { PlusOutlined } from '@ant-design/icons';
-import { IProductEdit } from '../../interfaces/products';
+import { IProductEdit, IProductImageDesc } from '../../interfaces/products';
 import { http_common } from "../../../env";
 import { ICategoryItem } from "../../home/types.ts";
+import EditorTiny from '../../common/EditorTiny/index.tsx';
 
 export interface ICategoryName {
     id: number;
@@ -22,6 +23,13 @@ const ProductEditPage = () => {
     const [previewTitle, setPreviewTitle] = useState('');
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [deletedPhotoNames, setDeletedPhotoNames] = useState<string[]>([]);
+    
+
+
+    const [description, setDescription] = useState<string>("");
+    const [descImages, setDescImages] = useState<IProductImageDesc[]>([]);
+
+
 
     useEffect(() => {
         http_common.get<ICategoryItem[]>("/api/Categories")
@@ -31,6 +39,11 @@ const ProductEditPage = () => {
         http_common.get<IProductEdit>(`/api/Products/${id}`)
             .then(resp => {
                 form.setFieldsValue(resp.data);
+
+                            // Підвантаження опису
+            if (resp.data.description) {
+                setDescription(resp.data.description);
+            }
 
                 if (resp.data.images) {
                     const existingImages = resp.data.images.map((image, index) => {
@@ -57,12 +70,11 @@ const ProductEditPage = () => {
             formData.append("CategoryId", String(values.categoryId));
             formData.append("Name", values.name || "");
             formData.append("Price", String(values.price || ""));
+            formData.append("Description", description || ""); // Додаємо опис
     
-            formData.append("CategoryList", JSON.stringify([]));
-    
-            const existingImages = fileList.map(file => 
-                typeof file.url === "string" 
-                    ? file.url.substring(file.url.lastIndexOf('/') + 1) 
+            const existingImages = fileList.map(file =>
+                typeof file.url === "string"
+                    ? file.url.substring(file.url.lastIndexOf('/') + 1)
                     : file.name
             );
             formData.append("Images", JSON.stringify(existingImages));
@@ -86,13 +98,14 @@ const ProductEditPage = () => {
         }
     };
     
-    
+
+
     const handleChange = (info: UploadChangeParam) => {
         setFileList(info.fileList);
         console.log("Current file list:", info.fileList); // Логування поточного списку файлів
     };
-    
-    
+
+
 
     // const handleChange = (info: UploadChangeParam) => {
     //     setFileList(info.fileList);
@@ -151,6 +164,22 @@ const ProductEditPage = () => {
                     </Upload>
                 </Form.Item>
 
+                
+
+                <EditorTiny
+                    value={description} //Значення, яке ми вводимо в поле
+                    label="Опис" //Підпис для даного інпуту
+                    field="description" //Назва інпуту
+                    getSelectImage={(image: IProductImageDesc) => {
+                        setDescImages((prevImages) => [...prevImages, image]);
+                    }}
+                    onEditorChange={(text: string) => {
+                        //Метод, який викликає сам компонет, коли в інпуті змінюється значення
+                        //console.log("Data set value", text);
+                        setDescription(text); //Текст, який в середині інпуту, записуємо у формік в поле description
+                    }}
+                />
+                
                 <Form.Item wrapperCol={{ span: 10, offset: 10 }}>
                     <Space>
                         <Link to={"/products"}>

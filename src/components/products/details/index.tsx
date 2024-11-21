@@ -21,19 +21,46 @@ const ProductDetailsPage = () => {
     if (!product) return <p>Loading...</p>;
 
     return (
-        <div className='max-w-2xl mx-auto p-6'>
-            <h2 className='text-4xl font-bold mb-5 text-center'>{product.name}</h2>
-            <Carousel arrows infinite={false} className="mb-5">
+        <div className='max-w-3xl mx-auto p-6 bg-gray-50 shadow-lg rounded-lg'>
+            <h2 className='text-5xl font-extrabold text-center mb-8 text-gray-800'>
+                {product.name}
+            </h2>
+
+            <Carousel
+                arrows
+                infinite={false}
+                className="mb-8 rounded-lg overflow-hidden shadow-md"
+            >
                 {product.images.map((image, i) => (
                     <div key={i}>
-                        <img src={`${API_URL}/images/1200_${image}`} alt={product.name} className='w-full h-96 object-cover' />
+                        <img
+                            src={`${API_URL}/images/1200_${image}`}
+                            alt={product.name}
+                            className='w-full h-96 object-cover'
+                        />
                     </div>
                 ))}
             </Carousel>
-            <p className='text-2xl font-semibold text-teal-800 mb-4'>Price: {product.price}$</p>
-            <div className='flex justify-center mt-6'>
-                <Link to="/products">   
-                    <Button type="primary">Back to Products</Button>
+
+            <div className='text-center mb-6'>
+                <div className='inline-block py-3 px-6 bg-teal-600 text-white text-2xl font-semibold rounded-full shadow-sm'>
+                    Price: {product.price}$
+                </div>
+            </div>
+
+            <div className='bg-white p-6 shadow-md rounded-lg'>
+                <h3 className='text-2xl font-bold mb-4 text-teal-700'>Description</h3>
+                <div
+                    className="text-gray-700 text-lg leading-relaxed description"
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+            </div>
+
+            <div className='flex justify-center mt-8'>
+                <Link to="/products">
+                    <Button type="primary" size="large" className="rounded-lg">
+                        Back to Products
+                    </Button>
                 </Link>
             </div>
         </div>
