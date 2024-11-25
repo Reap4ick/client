@@ -1,70 +1,167 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { IProductItem } from '../../interfaces/products';
-import { Carousel, Button } from 'antd';
-import { API_URL, http_common } from "../../../env";
+// import { useEffect, useState } from 'react';
+// import { useParams, Link } from 'react-router-dom';
+// import { IProductItem } from '../../interfaces/products';
+// import { Carousel, Button } from 'antd';
+// import { API_URL, http_common } from "../../../env";
 
-const ProductDetailsPage = () => {
+// const ProductDetailsPage = () => {
+//     const { id } = useParams<{ id: string }>();
+//     const [product, setProduct] = useState<IProductItem | null>(null);
+
+//     useEffect(() => {
+//         if (id) {
+//             http_common.get<IProductItem>(`/api/Products/${id}`)
+//                 .then(resp => {
+//                     setProduct(resp.data);
+//                 })
+//                 .catch(error => console.error("Failed to load product details:", error));
+//         }
+//     }, [id]);
+
+//     if (!product) return <p>Loading...</p>;
+
+//     return (
+//         <div className='max-w-3xl mx-auto p-6 bg-gray-50 shadow-lg rounded-lg'>
+//             <h2 className='text-5xl font-extrabold text-center mb-8 text-gray-800'>
+//                 {product.name}
+//             </h2>
+
+//             <Carousel
+//                 arrows
+//                 infinite={false}
+//                 className="mb-8 rounded-lg overflow-hidden shadow-md"
+//             >
+//                 {product.images.map((image, i) => (
+//                     <div key={i}>
+//                         <img
+//                             src={`${API_URL}/images/1200_${image}`}
+//                             alt={product.name}
+//                             className='w-full h-96 object-cover'
+//                         />
+//                     </div>
+//                 ))}
+//             </Carousel>
+
+//             <div className='text-center mb-6'>
+//                 <div className='inline-block py-3 px-6 bg-teal-600 text-white text-2xl font-semibold rounded-full shadow-sm'>
+//                     Price: {product.price}$
+//                 </div>
+//             </div>
+
+//             <div className='bg-white p-6 shadow-md rounded-lg'>
+//                 <h3 className='text-2xl font-bold mb-4 text-teal-700'>Description</h3>
+//                 <div
+//                     className="text-gray-700 text-lg leading-relaxed description"
+//                     dangerouslySetInnerHTML={{ __html: product.description }}
+//                 />
+//             </div>
+
+//             <div className='flex justify-center mt-8'>
+//                 <Link to="/products">
+//                     <Button type="primary" size="large" className="rounded-lg">
+//                         Back to Products
+//                     </Button>
+//                 </Link>
+//             </div>
+//         </div>
+//     );
+// }
+
+// export default ProductDetailsPage;
+
+
+
+import { useEffect, useState, useRef } from 'react';
+import { http_common, API_URL } from '../../../env';
+import { IProductItem } from '../../interfaces/products';
+import { useParams, Link } from 'react-router-dom';
+import { Button, Carousel, Collapse } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
+const { Panel } = Collapse;
+
+const ProductDetailPage = () => {
     const { id } = useParams<{ id: string }>();
     const [product, setProduct] = useState<IProductItem | null>(null);
 
+    const carouselRef = useRef<any>(null);
+
     useEffect(() => {
-        if (id) {
-            http_common.get<IProductItem>(`/api/Products/${id}`)
-                .then(resp => {
-                    setProduct(resp.data);
-                })
-                .catch(error => console.error("Failed to load product details:", error));
-        }
+        const fetchProduct = async () => {
+            try {
+                const resp = await http_common.get<IProductItem>(`/api/products/${id}`);
+                setProduct(resp.data);
+            } catch (error) {
+                console.log("Error fetching product: ", error);
+            }
+        };
+
+        fetchProduct();
     }, [id]);
 
-    if (!product) return <p>Loading...</p>;
+    const next = () => {
+        carouselRef.current ? carouselRef.current.next() : '';
+    };
+
+    const prev = () => {
+        carouselRef.current ? carouselRef.current.prev() : '';
+    };
 
     return (
-        <div className='max-w-3xl mx-auto p-6 bg-gray-50 shadow-lg rounded-lg'>
-            <h2 className='text-5xl font-extrabold text-center mb-8 text-gray-800'>
-                {product.name}
-            </h2>
-
-            <Carousel
-                arrows
-                infinite={false}
-                className="mb-8 rounded-lg overflow-hidden shadow-md"
-            >
-                {product.images.map((image, i) => (
-                    <div key={i}>
-                        <img
-                            src={`${API_URL}/images/1200_${image}`}
-                            alt={product.name}
-                            className='w-full h-96 object-cover'
-                        />
+        <div className="container mx-auto p-4 mt-5 shadow-2xl rounded-lg">
+            <div className="flex flex-col md:flex-row">
+                <div className="ml-5 md:w-1/2 relative">
+                    <Carousel ref={carouselRef} arrows={false} infinite>
+                        {product?.images.map((image, index) => (
+                            <div key={index}>
+                                <img
+                                    src={`${API_URL}/images/1200_${image}`}
+                                    alt={product?.name}
+                                    className="w-full h-[400px] object-cover"
+                                />
+                            </div>
+                        ))}
+                    </Carousel>
+                    <div className="absolute inset-y-0 left-0 flex items-center" style={{ left: '-20px' }}>
+                        <button onClick={prev}>&#10094;</button>
                     </div>
-                ))}
-            </Carousel>
+                    <div className="absolute inset-y-0 right-0 flex items-center" style={{ right: '-20px' }}>
+                        <button onClick={next}>&#10095;</button>
+                    </div>
+                </div>
 
-            <div className='text-center mb-6'>
-                <div className='inline-block py-3 px-6 bg-teal-600 text-white text-2xl font-semibold rounded-full shadow-sm'>
-                    Price: {product.price}$
+                <div className="md:w-1/2 ml-10 p-4">
+                    <h1 className='text-2xl text-center font-bold text-teal-700'>{product?.name}</h1>
+                    <hr className='border-t-2 text-center font-bold mt-3 mb-8'></hr>
+                    <p className='text-lg font-semibold text-gray-800'>Name:<span className='first:pl-3 italic text-teal-600'>{product?.name}</span></p>
+                    <p className='text-lg font-semibold text-gray-800'>Price:<span className='first:pl-3 italic text-teal-600'>${product?.price}</span></p>
+                    <p className='text-lg font-semibold text-gray-800'>Category:<span className='first:pl-3 italic text-teal-600'>{product?.categoryName}</span></p>
                 </div>
             </div>
 
-            <div className='bg-white p-6 shadow-md rounded-lg'>
-                <h3 className='text-2xl font-bold mb-4 text-teal-700'>Description</h3>
-                <div
-                    className="text-gray-700 text-lg leading-relaxed description"
-                    dangerouslySetInnerHTML={{ __html: product.description }}
-                />
+            <div className="mt-6">
+                <Collapse  defaultActiveKey={['1']}>
+                    <Panel header="Description" key="1">
+                        <div dangerouslySetInnerHTML={{ __html: product?.description || '<p><em>Description is not provided yet...</em></p>' }}/>
+                    </Panel>
+                </Collapse>
             </div>
 
-            <div className='flex justify-center mt-8'>
-                <Link to="/products">
-                    <Button type="primary" size="large" className="rounded-lg">
-                        Back to Products
-                    </Button>
-                </Link>
-            </div>
-        </div>
-    );
-}
+<div className="flex justify-between mt-5">
+    <Link to={`/products/edit/${product?.id}`}>
+        <Button
+            icon={<EditOutlined />}
+            className="text-white bg-gradient-to-br from-violet-400 to-red-400 font-medium rounded-lg px-5">
+            Edit Product
+        </Button>
+    </Link>
+    <Link to="/products">
+        <Button className="text-white bg-gradient-to-br from-green-400 to-blue-600 font-medium rounded-lg px-5">
+            Back to Products
+        </Button>
+    </Link>
+</div>
+</div>
+);
+};
 
-export default ProductDetailsPage;
+export default ProductDetailPage;
