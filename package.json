@@ -15,7 +15,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@headlessui/react": "^2.1.8",
     "@heroicons/react": "^2.1.5",
-    "@reduxjs/toolkit": "^2.2.8",
+    "@reduxjs/toolkit": "^2.3.0",
     "@tinymce/tinymce-react": "^5.1.1",
     "antd": "^5.20.6",
     "axios": "^1.7.7",
